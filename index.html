@@ -31,8 +31,8 @@ perspective:1200px;
 
 /* ----- 3D CARD ----- */
 .card3d{
-width:260px;
-height:360px;
+width:clamp(220px, 60vw, 320px);
+aspect-ratio: 4 / 6; /* perfect 4:6 ratio */
 position:relative;
 transform-style:preserve-3d;
 transition:transform 0.2s linear;
@@ -68,6 +68,26 @@ left:0;
 width:100%;
 height:100%;
 object-fit:cover;
+display:none; /* hide actual image for now */
+}
+
+/* placeholder visual */
+.face::before{
+content:"";
+position:absolute;
+inset:0;
+background:linear-gradient(135deg,#1e293b,#334155);
+}
+
+.face::after{
+content:"Image Placeholder";
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+font-size:14px;
+opacity:0.6;
+letter-spacing:0.5px;
 }
 
 .label{
