@@ -3,107 +3,281 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Responsive Lottie Breakpoint Demo</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
-
+<title>100 Editions Celebration</title>
 <style>
-body{
-margin:0;
-font-family:Arial, Helvetica, sans-serif;
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#020617;color:white;overflow-x:hidden}
+
+main{position:relative;z-index:2}
+
+/* logo */
+.logo{position:fixed;top:20px;left:50%;transform:translateX(-50%);font-size:22px;font-weight:600;letter-spacing:0.5px;z-index:5}
+
+/* ----- SCROLL SCENE ----- */
+.scene{
+height:300vh; /* long scroll area */
+position:relative;
+}
+
+.stage{
+position:sticky;
+top:0;
 height:100vh;
 display:flex;
-flex-direction:column;
 align-items:center;
 justify-content:center;
-text-align:center;
-transition:background 0.4s ease;
+perspective:1200px;
 }
 
-/* Center animation */
-#lottie{
+/* ----- 3D CARD ----- */
+.card3d{
 width:260px;
-height:260px;
-display:flex;
-align-items:center;
-justify-content:center;
-margin-bottom:30px;
+height:360px;
+position:relative;
+transform-style:preserve-3d;
+transition:transform 0.2s linear;
 }
 
-h2{
-font-size:32px;
-color:#ffffff;
-white-space:nowrap;
+.face{
+position:absolute;
+width:100%;
+height:100%;
+backface-visibility:hidden;
+border-radius:16px;
 overflow:hidden;
-border-right:3px solid white;
-padding-right:10px;
-animation:typing 3s steps(30,end), blink 0.8s infinite;
+display:flex;
+flex-direction:column;
+justify-content:flex-end;
+padding:16px;
+font-weight:bold;
 }
 
-.breakpoint::after{
-content:" Breakpoint above 1200px";
+.front{
+background:#1e293b;
 }
 
-/* default */
-body{background:#1abc9c}
-
-@media (max-width:1200px){
-body{background:#3498db}
-.breakpoint::after{content:" Breakpoint is 1200px"}
+.back{
+background:#ef4444;
+transform:rotateY(180deg);
 }
 
-@media (max-width:1000px){
-body{background:#9b59b6}
-.breakpoint::after{content:" Breakpoint is 1000px"}
+.face img{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+object-fit:cover;
 }
 
-@media (max-width:800px){
-body{background:rgb(241, 195, 14);}
-.breakpoint::after{content:" Breakpoint is 800px"}
+.label{
+position:relative;
+z-index:2;
+background:rgba(0,0,0,0.5);
+padding:6px 10px;
+border-radius:6px;
+font-size:14px;
 }
 
-@media (max-width:600px){
-body{background:#e74c3c}
-.breakpoint::after{content:" Breakpoint is 600px"}
+/* instruction text */
+.scrollHint{
+position:absolute;
+bottom:40px;
+text-align:center;
+opacity:.7;
+font-size:14px;
 }
 
-@media (max-width:400px){
-body{background:#2ecc71}
-.breakpoint::after{content:" Breakpoint is 400px"}
+/* ---- other sections ---- */
+section{padding:48px 18px;max-width:1100px;margin:auto}
+
+.timeline{display:grid;grid-template-columns:1fr;gap:16px}
+.card{background:rgba(30,41,59,.9);padding:16px;border-radius:14px}
+.card-media{height:140px;border-radius:10px;margin-bottom:12px}
+.color1{background:#3b82f6}
+.color2{background:#8b5cf6}
+.color3{background:#22c55e}
+
+.gallery{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gallery-card{height:140px;border-radius:12px}
+.g1{background:#f59e0b}
+.g2{background:#ef4444}
+.g3{background:#06b6d4}
+.g4{background:#a855f7}
+
+.community{height:220px;border-radius:16px;background:linear-gradient(135deg,#ef4444,#f59e0b);display:flex;justify-content:center;align-items:center;font-size:20px;font-weight:600;text-align:center;padding:20px}
+
+footer{padding:40px 20px;background:rgba(2,6,23,.9);text-align:center}
+.share{background:#22c55e;border:none;padding:14px 22px;border-radius:10px;font-size:16px;cursor:pointer}
+
+@media (min-width:600px){
+.timeline{grid-template-columns:repeat(2,1fr)}
+.gallery{grid-template-columns:repeat(3,1fr)}
 }
 
-@keyframes typing{
-from{width:0}
-to{width:100%}
-}
-
-@keyframes blink{
-0%{border-color:transparent}
-50%{border-color:white}
-100%{border-color:transparent}
+@media (min-width:900px){
+.timeline{grid-template-columns:repeat(3,1fr)}
+.gallery{grid-template-columns:repeat(4,1fr)}
 }
 </style>
 </head>
-
 <body>
 
-<div id="lottie"></div>
+<div class="logo">Pearl Academy</div>
 
-<h2>Responsive Layout - <span class="breakpoint"></span></h2>
+<main>
+
+<!-- 3D SCROLL CARD EXPERIENCE -->
+<div class="scene" id="scene">
+
+<div class="stage">
+
+<div class="card3d" id="card">
+
+<div class="face front" id="front">
+<img src="https://placehold.co/400x600/png">
+<div class="label">Edition 1</div>
+</div>
+
+<div class="face back" id="back">
+<img src="https://placehold.co/400x600/png">
+<div class="label">Edition 2</div>
+</div>
+
+</div>
+
+<div class="scrollHint">Scroll to explore editions</div>
+
+</div>
+
+</div>
+
+<section id="journey">
+<h2>Our Journey</h2>
+<div class="timeline">
+
+<div class="card">
+<div class="card-media color1"></div>
+<p>Edition 1 — The beginning of our newsletter journey.</p>
+</div>
+
+<div class="card">
+<div class="card-media color2"></div>
+<p>Student achievements and academic milestones.</p>
+</div>
+
+<div class="card">
+<div class="card-media color3"></div>
+<p>Celebrating community events and campus life.</p>
+</div>
+
+</div>
+</section>
+
+<section>
+<h2>Campus Moments</h2>
+<div class="gallery">
+<div class="gallery-card g1"></div>
+<div class="gallery-card g2"></div>
+<div class="gallery-card g3"></div>
+<div class="gallery-card g4"></div>
+</div>
+</section>
+
+<section>
+<h2>Message from the Community</h2>
+<div class="community">Community voices & messages will appear here</div>
+</section>
+
+<footer>
+<h3>Thank you for being part of our journey</h3>
+<button class="share" onclick="share()">Share on WhatsApp</button>
+</footer>
+
+</main>
 
 <script>
 
-document.addEventListener("DOMContentLoaded", function(){
+function share(){
+const url=window.location.href
+const text="Explore the 100th Edition Celebration"
+window.open(`https://wa.me/?text=${encodeURIComponent(text+' '+url)}`)
+}
 
-lottie.loadAnimation({
-  container: document.getElementById('lottie'),
-  renderer: 'svg',
-  loop: false,
-  autoplay: true,
-  path: 'Flip Number Counter Animation.json'
-});
+/* ----- SCROLL CONTROLLED 3D CARD ----- */
 
-});
+const scene=document.getElementById("scene")
+const card=document.getElementById("card")
+const front=document.getElementById("front")
+const back=document.getElementById("back")
+
+const editions=[
+{title:"Edition 1",img:"https://placehold.co/400x600/png?text=Edition+1"},
+{title:"Edition 2",img:"https://placehold.co/400x600/png?text=Edition+2"},
+{title:"Edition 3",img:"https://placehold.co/400x600/png?text=Edition+3"},
+{title:"Edition 4",img:"https://placehold.co/400x600/png?text=Edition+4"},
+{title:"Edition 5",img:"https://placehold.co/400x600/png?text=Edition+5"}
+]
+
+/* initialize first two faces */
+front.querySelector("img").src=editions[0].img
+front.querySelector(".label").innerText=editions[0].title
+
+back.querySelector("img").src=editions[1].img
+back.querySelector(".label").innerText=editions[1].title
+
+let currentIndex=0
+
+window.addEventListener("scroll",()=>{
+
+const rect=scene.getBoundingClientRect()
+const progress=Math.min(Math.max(-rect.top/(rect.height-window.innerHeight),0),1)
+
+/* rotation driven by scroll */
+const rotation=progress*(editions.length*180)
+card.style.transform=`rotateY(${rotation}deg)`
+
+/* which 180deg segment we are in */
+const index=Math.floor(rotation/180)
+
+if(index!==currentIndex){
+
+currentIndex=index
+
+/* determine which face is visible */
+const faceVisible=index % 2
+
+if(faceVisible===0){
+
+/* front is visible */
+if(editions[index]){
+front.querySelector("img").src=editions[index].img
+front.querySelector(".label").innerText=editions[index].title
+}
+
+if(editions[index+1]){
+back.querySelector("img").src=editions[index+1].img
+back.querySelector(".label").innerText=editions[index+1].title
+}
+
+}else{
+
+/* back is visible */
+if(editions[index]){
+back.querySelector("img").src=editions[index].img
+back.querySelector(".label").innerText=editions[index].title
+}
+
+if(editions[index+1]){
+front.querySelector("img").src=editions[index+1].img
+front.querySelector(".label").innerText=editions[index+1].title
+}
+
+}
+
+}
+
+})
 
 </script>
 
