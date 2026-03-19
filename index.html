@@ -109,7 +109,7 @@ main{position:relative;z-index:2}
 <button class="audio-toggle" onclick="toggleAudio()">🔊</button>
 
 <!-- safer audio setup -->
-<audio id="bgAudio" preload="auto" loop>
+<audio id="bgAudio" preload="auto" loop muted autoplay>
   <source src="audio.mp3" type="audio/mpeg">
   <source src="audio.ogg" type="audio/ogg">
 </audio>
@@ -144,7 +144,24 @@ function checkAudio(){
   }
 }
 
-window.addEventListener("load", checkAudio)
+window.addEventListener("load", ()=>{
+  checkAudio();
+
+  // autoplay muted (always allowed)
+  audio.muted = true;
+  audio.play().then(()=>{
+    // attempt unmute after slight delay (may still be blocked by browser)
+    setTimeout(()=>{
+      audio.muted = false;
+      audio.play().catch(()=>{
+        console.warn("Unmute blocked until user interaction");
+      });
+    }, 1000);
+  }).catch(()=>{
+    console.warn("Autoplay blocked until interaction");
+  });
+});
+})
 
 // start audio on user interaction (reliable)
 function startAudio(){
