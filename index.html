@@ -61,7 +61,7 @@ main{position:relative;z-index:2}
 .stage{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;perspective:1200px}
 
 .card3d{
-  width:clamp(220px,60vw,320px);
+  width:clamp(252px,60vw,370px);
   aspect-ratio:4/6;
   position:relative;
   transform-style:preserve-3d;
@@ -121,10 +121,12 @@ main{position:relative;z-index:2}
 
     <div class="card3d" id="card">
       <div class="face front" id="front">
-        <img alt="front">
+        <img alt="front" id="frontImg">
+        <video id="frontVideo" muted loop playsinline style="display:none;width:100%;height:100%;object-fit:cover;"></video>
       </div>
       <div class="face back" id="back">
-        <img alt="back">
+        <img alt="back" id="backImg">
+        <video id="backVideo" muted loop playsinline style="display:none;width:100%;height:100%;object-fit:cover;"></video>
       </div>
     </div>
 
@@ -190,12 +192,15 @@ const front=document.getElementById("front")
 const back=document.getElementById("back")
 
 const TOTAL_SLIDES=102 // slide0 to slide101
-const editions=Array.from({length:TOTAL_SLIDES},(_,i)=>({
-  img:`images/slide${i}.png`
-}))
+const editions=Array.from({length:TOTAL_SLIDES},(_,i)=>{
+  if(i===0){
+    return { type:"video", src:"video1.mp4" }
+  }
+  return { type:"image", src:`images/slide${i}.png` }
+})
 
-front.querySelector("img").src=editions[0].img
-back.querySelector("img").src=editions[1].img
+updateFace(front, editions[0], true)
+updateFace(back, editions[1], false)
 
 let currentIndex=-1
 
@@ -214,13 +219,31 @@ window.addEventListener("scroll",()=>{
   const face=index%2
 
   if(face===0){
-    if(editions[index]) front.querySelector("img").src=editions[index].img
-    if(editions[index+1]) back.querySelector("img").src=editions[index+1].img
+    if(editions[index]) updateFace(front, editions[index], true)
+    if(editions[index+1]) updateFace(back, editions[index+1], false)
   } else {
-    if(editions[index]) back.querySelector("img").src=editions[index].img
-    if(editions[index+1]) front.querySelector("img").src=editions[index+1].img
+    if(editions[index]) updateFace(back, editions[index], false)
+    if(editions[index+1]) updateFace(front, editions[index+1], true)
   }
 })
+
+function updateFace(faceEl, data, isFront){
+  const img = faceEl.querySelector("img")
+  const video = faceEl.querySelector("video")
+
+  if(data.type === "video"){
+    img.style.display = "none"
+    video.style.display = "block"
+    video.src = data.src
+    video.currentTime = 0
+    video.play().catch(()=>{})
+  } else {
+    video.pause()
+    video.style.display = "none"
+    img.style.display = "block"
+    img.src = data.src
+  }
+}
 
 // tests
 console.assert(typeof toggleAudio === 'function','toggleAudio exists')
