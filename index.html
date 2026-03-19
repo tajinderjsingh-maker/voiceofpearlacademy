@@ -55,6 +55,11 @@ transform:translateZ(0);
 .back{transform:rotateY(180deg)}
 .face img,.face video{width:100%;height:100%;object-fit:cover}
 
+/* shrink specific video (slide86) */
+.face video[src*="video86.mp4"]{
+  transform:scale(0.85);
+}
+
 .scrollText{margin-top:44px;font-size:14px;opacity:.7}
 .divider{width:60px;height:1px;background:#fff;opacity:.3;margin:12px auto}
 .arrow{font-size:20px;opacity:.6}
@@ -165,15 +170,22 @@ function render(){
 }
 
 let reachedEnd = false
+let inVideoSection = false
 
 // smooth scroll-based rotation
 window.addEventListener('wheel',(e)=>{
   const maxRotation = (TOTAL-1) * 180
 
-  // allow normal scroll after last slide
-  if(rotation >= maxRotation && e.deltaY > 0){
+  // if in video section, allow scroll back
+  if(inVideoSection && e.deltaY < 0){
+    inVideoSection = false
+    rotation = maxRotation - 1
+    render()
     return
   }
+
+  // allow normal scroll ONLY after user fully exits interaction
+  if(inVideoSection) return
 
   e.preventDefault()
 
@@ -186,9 +198,8 @@ window.addEventListener('wheel',(e)=>{
 
     if(!reachedEnd){
       reachedEnd = true
-      setTimeout(()=>{
-        document.getElementById('videos').scrollIntoView({behavior:'smooth'})
-      },200)
+      inVideoSection = true
+      document.getElementById('videos').scrollIntoView({behavior:'smooth'})
     }
   } else {
     reachedEnd = false
@@ -206,9 +217,15 @@ window.addEventListener('touchmove',e=>{
 
   const maxRotation = (TOTAL-1) * 180
 
-  if(rotation >= maxRotation && delta > 0){
+  // allow reverse from video section
+  if(inVideoSection && delta < 0){
+    inVideoSection = false
+    rotation = maxRotation - 1
+    render()
     return
   }
+
+  if(inVideoSection) return
 
   if(rotation < maxRotation){
     e.preventDefault()
@@ -224,9 +241,8 @@ window.addEventListener('touchmove',e=>{
 
     if(!reachedEnd){
       reachedEnd = true
-      setTimeout(()=>{
-        document.getElementById('videos').scrollIntoView({behavior:'smooth'})
-      },200)
+      inVideoSection = true
+      document.getElementById('videos').scrollIntoView({behavior:'smooth'})
     }
   } else {
     reachedEnd = false
