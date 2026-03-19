@@ -22,7 +22,7 @@ main{position:relative;z-index:2}
 
 .logo{
 position:fixed;top:20px;left:50%;transform:translateX(-50%);
-width:min(70vw,420px);z-index:5;
+width:min(49vw,294px);z-index:5;
 }
 
 .stage{
@@ -164,19 +164,34 @@ function render(){
   }
 }
 
+let reachedEnd = false
+
 // smooth scroll-based rotation
 window.addEventListener('wheel',(e)=>{
+  const maxRotation = (TOTAL-1) * 180
+
+  // allow normal scroll after last slide
+  if(rotation >= maxRotation && e.deltaY > 0){
+    return
+  }
+
   e.preventDefault()
 
-  // speed control (delta-based)
   rotation += e.deltaY * 0.6
 
-  // clamp limits
-  const maxRotation = (TOTAL-1) * 180
   if(rotation < 0) rotation = 0
-  if(rotation > maxRotation) {
+
+  if(rotation >= maxRotation){
     rotation = maxRotation
-    document.getElementById('videos').scrollIntoView({behavior:'smooth'})
+
+    if(!reachedEnd){
+      reachedEnd = true
+      setTimeout(()=>{
+        document.getElementById('videos').scrollIntoView({behavior:'smooth'})
+      },200)
+    }
+  } else {
+    reachedEnd = false
   }
 
   render()
@@ -191,7 +206,10 @@ window.addEventListener('touchmove',e=>{
 
   const maxRotation = (TOTAL-1) * 180
 
-  // prevent page scroll until slides complete
+  if(rotation >= maxRotation && delta > 0){
+    return
+  }
+
   if(rotation < maxRotation){
     e.preventDefault()
   }
@@ -201,10 +219,17 @@ window.addEventListener('touchmove',e=>{
 
   if(rotation < 0) rotation = 0
 
-  if(rotation > maxRotation){
+  if(rotation >= maxRotation){
     rotation = maxRotation
-    // allow scroll to videos after last slide
-    document.getElementById('videos').scrollIntoView({behavior:'smooth'})
+
+    if(!reachedEnd){
+      reachedEnd = true
+      setTimeout(()=>{
+        document.getElementById('videos').scrollIntoView({behavior:'smooth'})
+      },200)
+    }
+  } else {
+    reachedEnd = false
   }
 
   render()
