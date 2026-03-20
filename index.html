@@ -9,38 +9,24 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial;background:#020617;color:#fff;overflow:hidden}
 
-@media (prefers-reduced-motion: reduce){
- body::before{animation:none}
-}
-
 body::before{content:"";position:fixed;inset:0;z-index:0;
 background:
-radial-gradient(circle at 20% 30%, rgba(239,68,68,0.18), transparent 40%),
-radial-gradient(circle at 80% 70%, rgba(59,130,246,0.18), transparent 40%);
-animation:bgMove 30s linear infinite}
-@keyframes bgMove{0%{transform:translate(0,0)}50%{transform:translate(-3%,3%)}100%{transform:translate(0,0)}}
+radial-gradient(circle at 20% 30%, rgba(239,68,68,0.15), transparent 40%),
+radial-gradient(circle at 80% 70%, rgba(59,130,246,0.15), transparent 40%);
+animation:bgMove 40s linear infinite}
+@keyframes bgMove{0%{transform:translate(0,0)}50%{transform:translate(-2%,2%)}100%{transform:translate(0,0)}}
 
 .logoWrap{position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:5;text-align:center}
 .logo{width:min(49vw,294px)}
-.tagline{margin-top:8px;font-size:12px;opacity:.8}
-
-.audioBtn{position:fixed;top:12px;right:16px;z-index:10;cursor:pointer;font-size:18px;opacity:.8}
+.tagline{margin-top:8px;font-size:12px;opacity:.85}
 
 .stage{height:100vh;display:flex;align-items:center;justify-content:center;perspective:1200px;position:relative;z-index:2}
+.carousel{position:relative;width:100%;height:min(70vh,420px);overflow:hidden;touch-action:none}
 
-.carousel{position:relative;width:100%;height:min(70vh,420px);overflow:hidden;touch-action:none;cursor:grab}
+.card{position:absolute;left:50%;top:50%;width:clamp(180px,70vw,252px);aspect-ratio:252/370;border-radius:14px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,0.2);}
+.card img,.card video{width:100%;height:100%;object-fit:cover}
 
-.card{position:absolute;left:50%;top:50%;width:clamp(180px,70vw,252px);aspect-ratio:252/370;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.2);background:#000;transform:translate(-50%,-50%)}
-.card img,.card video{width:100%;height:100%;object-fit:cover;pointer-events:none}
-
-.hint{position:absolute;bottom:80px;font-size:14px;opacity:.85;display:flex;align-items:center;gap:8px}
-
-.arrow{display:inline-block;opacity:.7}
-.arrow.left{animation:arrowLeft 1.2s infinite ease-in-out}
-.arrow.right{animation:arrowRight 1.2s infinite ease-in-out}
-
-@keyframes arrowLeft{0%{transform:translateX(0)}50%{transform:translateX(-6px)}100%{transform:translateX(0)}}
-@keyframes arrowRight{0%{transform:translateX(0)}50%{transform:translateX(6px)}100%{transform:translateX(0)}}
+.hint{position:absolute;bottom:80px;font-size:14px;opacity:.85;display:flex;gap:8px}
 </style>
 </head>
 <body>
@@ -50,16 +36,9 @@ animation:bgMove 30s linear infinite}
 <div class="tagline">Celebrating 100 weeks</div>
 </div>
 
-<div class="audioBtn" id="audioBtn">🔊</div>
-<audio id="bgAudio" src="audio.mp3" loop></audio>
-
 <div class="stage">
 <div class="carousel" id="carousel"></div>
-<div class="hint">
- <span class="arrow left">←</span>
- <span>Swipe</span>
- <span class="arrow right">→</span>
-</div>
+<div class="hint">← Swipe →</div>
 </div>
 
 <script>
@@ -70,18 +49,26 @@ const data = Array.from({length:TOTAL},(_,i)=>{
  if(i===35) return {type:'video',src:'cancerday.mp4'}
  if(i===84) return {type:'video',src:'video86.mp4'}
  if(i===88) return {type:'video',src:'FDCI.mp4'}
- if(i<=87) return {type:'image',src:`images/slide${i}.webp`}
- return null
+ return {type:'image',src:`images/slide${i}.webp`}
 })
 
 const carousel=document.getElementById('carousel')
-let index=0, target=0, dragging=false
+let index=0,target=0,dragging=false
 
-const videoDurationCache = {}
+// create fixed pool (NO re-creation = no flicker)
+const VISIBLE=7
+const cards=[]
 
-function createCard(item, isCenter){
+for(let i=0;i<VISIBLE;i++){
  const el=document.createElement('div')
  el.className='card'
+ carousel.appendChild(el)
+ cards.push({el, dataIndex:null, media:null})
+}
+
+function setContent(card,item,isCenter){
+ if(card.dataIndex===item.src) return
+ card.el.innerHTML=''
 
  if(item.type==='video'){
   const v=document.createElement('video')
@@ -89,115 +76,82 @@ function createCard(item, isCenter){
   v.muted=true
   v.loop=true
   v.playsInline=true
-  v.preload='metadata'
-
   if(isCenter){
-    v.autoplay=true
-    v.onloadeddata=()=>v.play().catch(()=>{})
+   v.autoplay=true
+   v.play().catch(()=>{})
   }
-
-  el.appendChild(v)
+  card.el.appendChild(v)
+  card.media=v
  }else{
   const img=document.createElement('img')
   img.src=item.src
-  img.loading='lazy'
-  el.appendChild(img)
+  card.el.appendChild(img)
+  card.media=img
  }
- return el
+ card.dataIndex=item.src
 }
 
 function render(){
- const current=Math.floor(index)
- carousel.innerHTML=''
+ const base=Math.floor(index)
 
- for(let i=current-3;i<=current+3;i++){
-  if(!data[i]) continue
+ for(let s=0;s<VISIBLE;s++){
+  const i=base + s - Math.floor(VISIBLE/2)
+  const card=cards[s]
+  const item=data[i]
+  if(!item) continue
 
-  const offset = i - index
-  const abs = Math.abs(offset)
+  const offset=i-index
+  const abs=Math.abs(offset)
 
-  const card=createCard(data[i], abs<0.5)
+  setContent(card,item,abs<0.5)
 
-  const x = offset * 95
-  const scale = 1 - Math.min(Math.pow(abs,1.2)*0.12,0.3)
-  const rotateY = -offset * 15
-  const rotateX = (target-index)*3
-  const opacity = abs>3 ? 0 : (abs<0.5 ? 1 : 0.75)
+  // pause non-center videos
+  if(card.media && card.media.tagName==='VIDEO'){
+    if(abs<0.5){card.media.play().catch(()=>{})}
+    else{card.media.pause()}
+  }
 
-  card.style.transform = `translate(calc(-50% + ${x}px), -50%) scale(${scale}) rotateY(${rotateY}deg) rotateX(${rotateX}deg)`
-  card.style.opacity = opacity
-  card.style.zIndex = 20 - Math.round(abs*5)
+  const x=offset*90
+  const scale=1-Math.min(Math.pow(abs,1.2)*0.12,0.3)
+  const rotateY=-offset*15
 
-  const shadow = 12 + (1-abs)*28
-  card.style.boxShadow = `0 ${shadow}px ${shadow*1.5}px rgba(0,0,0,0.55)`
-
-  carousel.appendChild(card)
+  card.el.style.transform=`translate(calc(-50% + ${x}px), -50%) scale(${scale}) rotateY(${rotateY}deg)`
+  card.el.style.zIndex=20-Math.round(abs*5)
+  card.el.style.opacity=abs<0.5?1:0.8
  }
 }
 
 function animate(){
- const diff = target - index
- index += diff * 0.06
- if(Math.abs(diff) < 0.0005) index = target
+ index+=(target-index)*0.07
  render()
  requestAnimationFrame(animate)
 }
 animate()
 
-let autoTimer=null
-function scheduleNext(){
- clearTimeout(autoTimer)
- const current=Math.round(target)
- const item=data[current]
+// autoplay simple (stable)
+setInterval(()=>{
+ if(!dragging) target=(target+1)%TOTAL
+},2000)
 
- if(item?.type==='video'){
-   if(videoDurationCache[item.src]){
-     autoTimer=setTimeout(()=>{if(!dragging)target=(target+1)%TOTAL; scheduleNext()}, videoDurationCache[item.src])
-   }else{
-     const v=document.createElement('video')
-     v.src=item.src
-     v.onloadedmetadata=()=>{
-       videoDurationCache[item.src]=(v.duration||3)*1000
-       scheduleNext()
-     }
-   }
- }else{
-   autoTimer=setTimeout(()=>{if(!dragging)target=(target+1)%TOTAL; scheduleNext()},1800)
- }
-}
-scheduleNext()
-
-let lastX=0,velocity=0
+// pointer smooth
+let lastX=0
 carousel.addEventListener('pointerdown',e=>{
  dragging=true
  lastX=e.clientX
- velocity=0
  carousel.setPointerCapture(e.pointerId)
 })
 
 window.addEventListener('pointermove',e=>{
  if(!dragging) return
  const dx=e.clientX-lastX
- const smoothDx = dx * 0.6
- velocity = smoothDx
- target -= smoothDx * 0.006
+ target-=dx*0.005
  lastX=e.clientX
- target=Math.max(0,Math.min(TOTAL-1,target))
 })
 
 window.addEventListener('pointerup',e=>{
- if(!dragging) return
  dragging=false
  try{carousel.releasePointerCapture(e.pointerId)}catch{}
- target -= Math.max(Math.min(velocity,10),-10)*0.015
- target=Math.max(0,Math.min(TOTAL-1,target))
- scheduleNext()
 })
-
-const audio=document.getElementById('bgAudio')
-const btn=document.getElementById('audioBtn')
-window.addEventListener('click',()=>audio.play().catch(()=>{}),{once:true})
-btn.onclick=()=>{audio.paused?audio.play():audio.pause()}
 
 console.assert(data.length===89)
 </script>
