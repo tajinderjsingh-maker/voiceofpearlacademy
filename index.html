@@ -9,51 +9,41 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial;background:#020617;color:#fff;overflow-x:hidden}
 
-body::before{
-content:"";position:fixed;inset:0;z-index:0;
+body::before{content:"";position:fixed;inset:0;z-index:0;
 background:
 radial-gradient(circle at 20% 30%, rgba(239,68,68,0.25), transparent 40%),
 radial-gradient(circle at 80% 70%, rgba(59,130,246,0.25), transparent 40%);
-animation:bgMove 25s linear infinite;
-}
+animation:bgMove 25s linear infinite}
 @keyframes bgMove{0%{transform:translate(0,0)}50%{transform:translate(-5%,5%)}100%{transform:translate(0,0)}}
 
 .logoWrap{position:fixed;top:4px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;z-index:5}
 .logo{width:min(49vw,294px)}
-.tagline{margin-top:22px;font-size:12px;opacity:.7;letter-spacing:.5px}
+.tagline{margin-top:22px;font-size:12px;opacity:.7}
 
 .stage{height:100vh;display:flex;align-items:center;justify-content:center;perspective:1200px;position:relative;z-index:2}
 
-.carousel{display:flex;align-items:center;justify-content:center;position:relative;width:100%;height:min(70vh,420px);overflow:hidden;touch-action:none;cursor:grab}
-.carousel:active{cursor:grabbing}
+.carousel{position:relative;width:100%;height:min(70vh,420px);overflow:hidden;touch-action:none}
 
-.card{position:absolute;width:clamp(180px,70vw,252px);aspect-ratio:252/370;border-radius:14px;overflow:hidden;transition:all .4s ease;border:1px solid rgba(255,255,255,0.25);background:#000}
+.card{position:absolute;width:clamp(180px,70vw,252px);aspect-ratio:252/370;border-radius:14px;overflow:hidden;transition:.4s ease;border:1px solid rgba(255,255,255,0.25);background:#000}
 .card img,.card video{width:100%;height:100%;object-fit:cover;pointer-events:none}
 
-.center{transform:translateX(0) scale(1);z-index:3;opacity:1}
-.left{transform:translateX(calc(-1 * min(120px, 18vw))) scale(.9) rotateY(10deg);z-index:2;opacity:.7}
-.right{transform:translateX(min(120px, 18vw)) scale(.9) rotateY(-10deg);z-index:2;opacity:.7}
-.hiddenL{transform:translateX(calc(-1 * min(420px, 60vw))) scale(.8);opacity:0}
-.hiddenR{transform:translateX(min(420px, 60vw)) scale(.8);opacity:0}
-
-.card::after{content:"";position:absolute;inset:0;box-shadow:0 20px 40px rgba(0,0,0,0.6);pointer-events:none}
+.center{transform:translateX(0) scale(1);z-index:3}
+.left{transform:translateX(-120px) scale(.9) rotateY(10deg);z-index:2;opacity:.7}
+.right{transform:translateX(120px) scale(.9) rotateY(-10deg);z-index:2;opacity:.7}
+.hiddenL{transform:translateX(-300px) scale(.8);opacity:0}
+.hiddenR{transform:translateX(300px) scale(.8);opacity:0}
 
 .hint{position:absolute;bottom:56px;font-size:14px;opacity:.6}
 .nav{position:absolute;top:50%;transform:translateY(-50%);font-size:28px;opacity:.4;cursor:pointer}
 .leftNav{left:20px}
 .rightNav{right:20px}
-
-.video-section{position:relative;width:100%;padding:40px 20px;display:flex;gap:20px;overflow-x:auto;z-index:2}
-.video-card{min-width:260px;background:#111;border-radius:12px;padding:10px}
-.video-card iframe{width:100%;height:150px;border-radius:8px}
-.video-title{text-align:center;font-size:12px;opacity:.7}
 </style>
 </head>
 <body>
 
 <div class="logoWrap">
-  <img src="logo.png" class="logo">
-  <div class="tagline">Celebrating 100 weeks</div>
+<img src="logo.png" class="logo">
+<div class="tagline">Celebrating 100 weeks</div>
 </div>
 
 <div class="stage">
@@ -63,22 +53,23 @@ animation:bgMove 25s linear infinite;
 <div class="nav rightNav">›</div>
 </div>
 
-<div class="video-section" id="videoSection"></div>
-
 <script>
 const TOTAL=89
+
+// ⚠️ FIXED PATHS (IMPORTANT)
 const data=Array.from({length:TOTAL},(_,i)=>{
- if(i===44) return {type:'video',src:'./cancerday.mp4'}
- if(i===86) return {type:'video',src:'./video86.mp4'}
- if(i===87) return {type:'video',src:'./FDCI.mp4'}
- if(i===88) return {type:'video',src:'./video88.mp4'}
- return {type:'image',src:`./images/slide${i}.webp`}
+ if(i===44) return {type:'video',src:'videos/cancerday.mp4'}
+ if(i===86) return {type:'video',src:'videos/video86.mp4'}
+ if(i===87) return {type:'video',src:'videos/FDCI.mp4'}
+ if(i===88) return {type:'video',src:'videos/video88.mp4'}
+ return {type:'image',src:`images/slide${i}.webp`}
 })
 
 const carousel=document.getElementById('carousel')
 let index=0
 let targetIndex=0
-let cards=[]
+let last=-1
+let dragging=false
 
 function createCard(item){
  const el=document.createElement('div')
@@ -86,52 +77,36 @@ function createCard(item){
 
  if(item.type==='video'){
   const v=document.createElement('video')
+  v.src=item.src
+  v.muted=true
+  v.autoplay=true
+  v.loop=true
+  v.playsInline=true
+  v.preload='auto'
 
-  // IMPORTANT: set attributes BEFORE src for autoplay reliability
-  v.muted = true
-  v.setAttribute('muted','')
-  v.loop = true
-  v.autoplay = true
-  v.playsInline = true
-  v.setAttribute('playsinline','')
-  v.preload = 'auto'
-  v.controls = false
+  v.onloadeddata=()=>v.play().catch(()=>{})
 
-  v.src = item.src
-  v.load()
-
-  // fallback: try play again when ready
-  v.addEventListener('canplay',()=>{
-    v.play().catch(()=>{})
-  })
-
-  // debug helper (remove later if needed)
-  v.addEventListener('error',()=>{
-    console.error('Video failed to load:', item.src)
-  })
+  v.onerror=()=>{
+    console.error('❌ Missing video:', item.src)
+    el.innerHTML='<div style="display:flex;height:100%;align-items:center;justify-content:center;opacity:.6">Missing video</div>'
+  }
 
   v.style.objectFit='contain'
   el.appendChild(v)
-
  }else{
   const img=document.createElement('img')
   img.src=item.src
-  img.loading='lazy'
   el.appendChild(img)
  }
-
  return el
 }
 
-// nav
-
-document.querySelector('.leftNav').onclick=()=>{ targetIndex=Math.max(0,targetIndex-1) }
-document.querySelector('.rightNav').onclick=()=>{ targetIndex=Math.min(TOTAL-1,targetIndex+1) }
-
 function render(){
- carousel.innerHTML=''
- cards=[]
  const current=Math.round(index)
+ if(current===last) return
+ last=current
+
+ carousel.innerHTML=''
 
  for(let i=current-2;i<=current+2;i++){
   if(!data[i]) continue
@@ -144,82 +119,48 @@ function render(){
   else card.classList.add('hiddenR')
 
   carousel.appendChild(card)
-  cards.push(card)
  }
-
- const centerCard=cards.find(c=>c.classList.contains('center'))
- const vid=centerCard?.querySelector('video')
- if(vid) vid.play().catch(()=>{})
 }
 
 function animate(){
- index += (targetIndex - index) * 0.06
+ index += (targetIndex-index)*0.06
  render()
  requestAnimationFrame(animate)
 }
 animate()
 
-// AUTO PLAY (smooth loop)
-let autoPlay=true
-
+// autoplay
 setInterval(()=>{
- if(dragging) return /* pause during manual interaction */
- targetIndex += 1
- if(targetIndex >= TOTAL) targetIndex = 0
+ if(dragging) return
+ targetIndex=(targetIndex+1)%TOTAL
 },2000)
 
-// wheel
-carousel.addEventListener('wheel',e=>{
- e.preventDefault()
- targetIndex += e.deltaY * 0.01
- targetIndex=Math.max(0,Math.min(TOTAL-1,targetIndex))
-},{passive:false})
+// nav
+const leftBtn=document.querySelector('.leftNav')
+const rightBtn=document.querySelector('.rightNav')
+leftBtn.onclick=()=>targetIndex--
+rightBtn.onclick=()=>targetIndex++
 
-// TOUCH FIXED (clean + smooth)
+// touch FIXED
 let startX=0
-let startIndex=0
-let dragging=false
-
 carousel.addEventListener('touchstart',e=>{
  dragging=true
  startX=e.touches[0].clientX
- startIndex=targetIndex
 })
 
 carousel.addEventListener('touchmove',e=>{
  if(!dragging) return
  e.preventDefault()
-
- const currentX = e.touches[0].clientX
- const dx = currentX - startX
-
- targetIndex -= dx * 0.015
- startX = currentX
-
- targetIndex = Math.max(0,Math.min(TOTAL-1,targetIndex))
+ const dx=e.touches[0].clientX-startX
+ targetIndex-=dx*0.01
+ startX=e.touches[0].clientX
 },{passive:false})
 
-carousel.addEventListener('touchend',()=>{
- dragging=false
-})
+carousel.addEventListener('touchend',()=>dragging=false)
 
-// YouTube control
-const videoSection=document.getElementById('videoSection')
-const isLocal = location.hostname.includes('localhost') || location.hostname.includes('127') || location.hostname.includes('sandbox')
-
-videoSection.innerHTML = isLocal ? `
-<div class="video-card"><div style="height:150px;display:flex;align-items:center;justify-content:center;opacity:.6">YouTube disabled in preview</div></div>
-<div class="video-card"><div style="height:150px;display:flex;align-items:center;justify-content:center;opacity:.6">YouTube disabled in preview</div></div>
-` : `
-<div class="video-card">
-<iframe src="https://www.youtube.com/embed/KHx3EGSJoAs" allowfullscreen></iframe>
-<div class="video-title">School of Complete Professionals</div>
-</div>
-<div class="video-card">
-<iframe src="https://www.youtube.com/embed/998spY0pE6c" allowfullscreen></iframe>
-<div class="video-title">Aaj Ki Rani</div>
-</div>
-`
+// TEST CASE (console check)
+console.assert(data[44].type==='video','Slide 44 should be video')
+console.assert(data[86].type==='video','Slide 86 should be video')
 </script>
 
 </body>
