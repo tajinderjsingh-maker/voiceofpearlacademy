@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Voice of Pearl</title>
+<title>Newsletter Experience</title>
 
 <style>
 *{box-sizing:border-box}
@@ -16,9 +16,9 @@ radial-gradient(circle at 80% 70%, rgba(59,130,246,0.25), transparent 40%);
 animation:bgMove 25s linear infinite}
 @keyframes bgMove{0%{transform:translate(0,0)}50%{transform:translate(-5%,5%)}100%{transform:translate(0,0)}}
 
-.logoWrap{position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:5;text-align:center}
+.logoWrap{position:fixed;top:0px;left:50%;transform:translateX(-50%);z-index:5;text-align:center}
 .logo{width:min(49vw,294px)}
-.tagline{margin-top:0;font-size:12px;opacity:.7}
+.tagline{margin-top:12px;font-size:12px;opacity:.7}
 
 .audioBtn{position:fixed;top:12px;right:16px;z-index:10;cursor:pointer;font-size:18px;opacity:.8}
 
@@ -26,16 +26,42 @@ animation:bgMove 25s linear infinite}
 
 .carousel{position:relative;width:100%;height:min(70vh,420px);overflow:hidden;touch-action:none}
 
-.card{position:absolute;left:50%;top:50%;width:clamp(180px,70vw,252px);aspect-ratio:252/370;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.25);background:#000;transform:translate(-50%,-50%);transition:transform .5s cubic-bezier(.22,.61,.36,1),opacity .4s}
+.card{position:absolute;left:50%;top:50%;width:clamp(180px,70vw,252px);aspect-ratio:252/370;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.25);background:#000;transform:translate(-50%,-50%);will-change:transform,opacity;}
 .card img,.card video{width:100%;height:100%;object-fit:cover;pointer-events:none}
 
-.center{transform:translate(-50%,-50%) scale(1) rotateY(0deg);z-index:3;opacity:1}
-.left{transform:translate(calc(-50% - 90px),-50%) scale(.9) rotateY(12deg);z-index:2;opacity:.7}
-.right{transform:translate(calc(-50% + 90px),-50%) scale(.9) rotateY(-12deg);z-index:2;opacity:.7}
-.hiddenL{transform:translate(calc(-50% - 260px),-50%) scale(.8);opacity:0}
-.hiddenR{transform:translate(calc(-50% + 260px),-50%) scale(.8);opacity:0}
+.hint{position:absolute;bottom:80px;font-size:14px;opacity:.8;display:flex;align-items:center;gap:8px}
 
-.hint{position:absolute;bottom:40px;font-size:14px;opacity:.6}
+.arrow{
+ display:inline-block;
+ opacity:.7;
+}
+
+.arrow.left{
+ animation:arrowLeft 1.2s infinite ease-in-out;
+}
+
+.arrow.right{
+ animation:arrowRight 1.2s infinite ease-in-out;
+}
+
+@keyframes arrowLeft{
+ 0%{transform:translateX(0);opacity:.3}
+ 50%{transform:translateX(-8px);opacity:1}
+ 100%{transform:translateX(0);opacity:.3}
+}
+
+@keyframes arrowRight{
+ 0%{transform:translateX(0);opacity:.3}
+ 50%{transform:translateX(8px);opacity:1}
+ 100%{transform:translateX(0);opacity:.3}
+}
+/* removed delay for perfect mirrored sync */
+
+@keyframes arrowMove{
+ 0%{transform:translateX(0);opacity:.3}
+ 50%{transform:translateX(6px);opacity:1}
+ 100%{transform:translateX(0);opacity:.3}
+}
 </style>
 </head>
 <body>
@@ -50,13 +76,16 @@ animation:bgMove 25s linear infinite}
 
 <div class="stage">
 <div class="carousel" id="carousel"></div>
-<div class="hint">← Swipe →</div>
+<div class="hint">
+ <span class="arrow left">←</span>
+ <span>Swipe</span>
+ <span class="arrow right">→</span>
+</div>
 </div>
 
 <script>
-const TOTAL=89 // 0–88
+const TOTAL=89
 
-// correct slide mapping
 const data = Array.from({length:TOTAL},(_,i)=>{
  if(i===20) return {type:'video',src:'slide20.mp4'}
  if(i===35) return {type:'video',src:'cancerday.mp4'}
@@ -95,40 +124,88 @@ function createCard(item){
 }
 
 function render(){
- const current=Math.round(index)
- if(current===last) return
+ const current=Math.floor(index)
+ if(current===last && Math.abs(index-current)<0.001) return
  last=current
 
  carousel.innerHTML=''
 
- for(let i=current-2;i<=current+2;i++){
+ for(let i=current-3;i<=current+3;i++){
   if(!data[i]) continue
   const card=createCard(data[i])
 
-  if(i===current) card.classList.add('center')
-  else if(i===current-1) card.classList.add('left')
-  else if(i===current+1) card.classList.add('right')
-  else if(i<current) card.classList.add('hiddenL')
-  else card.classList.add('hiddenR')
+  const offset = i - index
+  const abs = Math.abs(offset)
+
+  const x = offset * 90
+  const scale = 1 - Math.min(abs*0.1,0.25)
+  const rotateY = -offset * 15
+  const rotateX = Math.min(Math.max((target-index)*6,-6),6)
+  const opacity = abs>3 ? 0 : 1 - abs*0.25
+
+  const rotateZ = offset * 2
+  card.style.transform = `translate(calc(-50% + ${x}px), -50%) scale(${scale}) rotateY(${rotateY}deg) rotateX(${rotateX}deg) rotateZ(${rotateZ}deg)`
+  card.style.opacity = opacity
+
+  // enhanced shadow for depth & overlap feel
+  const shadowIntensity = 20 + (1 - abs) * 40
+  card.style.boxShadow = `0 ${shadowIntensity}px ${shadowIntensity*2}px rgba(0,0,0,0.6)`
+  card.style.zIndex = 10 - Math.round(abs*3)
 
   carousel.appendChild(card)
  }
 }
 
 function animate(){
- index += (target-index)*0.08 // smoother easing
+ const diff = target - index
+ index += diff * 0.09
+ if(Math.abs(diff) < 0.001) index = target
  render()
  requestAnimationFrame(animate)
 }
 animate()
 
-// autoplay faster
-setInterval(()=>{
- if(dragging) return
- target=(target+1)%TOTAL
-},1800)
+// AUTO PLAY WITH VIDEO AWARE TIMING
+let autoTimer=null
 
-// touch drag improved
+function scheduleNext(){
+ clearTimeout(autoTimer)
+
+ const current=Math.round(target)
+ const item=data[current]
+
+ if(item && item.type==='video'){
+   // wait for video duration
+   const tempVideo=document.createElement('video')
+   tempVideo.src=item.src
+   tempVideo.preload='metadata'
+
+   tempVideo.onloadedmetadata=()=>{
+     const duration = (tempVideo.duration || 3) * 1000
+     autoTimer=setTimeout(()=>{
+       if(!dragging) target=(target+1)%TOTAL
+       scheduleNext()
+     }, duration)
+   }
+
+   tempVideo.onerror=()=>{
+     // fallback if video fails
+     autoTimer=setTimeout(()=>{
+       if(!dragging) target=(target+1)%TOTAL
+       scheduleNext()
+     },1800)
+   }
+
+ }else{
+   autoTimer=setTimeout(()=>{
+     if(!dragging) target=(target+1)%TOTAL
+     scheduleNext()
+   },1800)
+ }
+}
+
+scheduleNext()
+
 let startX=0
 carousel.addEventListener('touchstart',e=>{
  dragging=true
@@ -144,18 +221,29 @@ carousel.addEventListener('touchmove',e=>{
  target=Math.max(0,Math.min(TOTAL-1,target))
 },{passive:false})
 
-carousel.addEventListener('touchend',()=>dragging=false)
+carousel.addEventListener('touchend',()=>{
+ dragging=false
+ scheduleNext() // resume timing after interaction
+})
 
-// audio autoplay (with fallback for browser restriction)
 const audio=document.getElementById('bgAudio')
 const btn=document.getElementById('audioBtn')
 
 function playAudio(){
- audio.play().catch(()=>{})
+ // try autoplay with sound (may fail silently depending on browser)
+ audio.muted = false
+ audio.play().catch(()=>{
+   // fallback: start muted then unmute on interaction
+   audio.muted = true
+   audio.play().then(()=>{
+     document.addEventListener('click',()=>{
+       audio.muted = false
+     },{once:true})
+   }).catch(()=>{})
+ })
 }
 
 window.addEventListener('load',playAudio)
-
 document.addEventListener('click',playAudio,{once:true})
 
 btn.onclick=()=>{
@@ -163,7 +251,6 @@ btn.onclick=()=>{
  else{audio.pause();btn.innerText='🔇'}
 }
 
-// tests
 console.assert(data.length===89,'Total slides incorrect')
 console.assert(data[20].type==='video','Slide 20 should be video')
 console.assert(data[88].type==='video','Slide 88 should be video')
