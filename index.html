@@ -86,20 +86,40 @@ function createCard(item){
 
  if(item.type==='video'){
   const v=document.createElement('video')
-  v.src=item.src
-  v.muted=true
-  v.loop=true
-  v.autoplay=true
-  v.playsInline=true
-  v.preload='auto'
+
+  // IMPORTANT: set attributes BEFORE src for autoplay reliability
+  v.muted = true
+  v.setAttribute('muted','')
+  v.loop = true
+  v.autoplay = true
+  v.playsInline = true
+  v.setAttribute('playsinline','')
+  v.preload = 'auto'
+  v.controls = false
+
+  v.src = item.src
+  v.load()
+
+  // fallback: try play again when ready
+  v.addEventListener('canplay',()=>{
+    v.play().catch(()=>{})
+  })
+
+  // debug helper (remove later if needed)
+  v.addEventListener('error',()=>{
+    console.error('Video failed to load:', item.src)
+  })
+
   v.style.objectFit='contain'
   el.appendChild(v)
+
  }else{
   const img=document.createElement('img')
   img.src=item.src
   img.loading='lazy'
   el.appendChild(img)
  }
+
  return el
 }
 
