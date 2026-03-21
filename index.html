@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Newsletter Experience</title>
+<title>Voice of Pearl</title>
 
 <style>
 *{box-sizing:border-box}
@@ -164,7 +164,7 @@ function render(){
   const scale=1-Math.min(Math.pow(abs,1.2)*0.12,0.3)
   const rotateY=-offset*15
 
-  card.el.style.transform=`translate(calc(-50% + ${x}px), -50%) scale(${scale}) rotateY(${rotateY}deg)`
+  card.el.style.transform=`translate(calc(-50% + ${x}px), -45%) scale(${scale}) rotateY(${rotateY}deg)`
   card.el.style.zIndex=20-Math.round(abs*5)
   card.el.style.opacity=abs<0.5?1:0.8
  }
