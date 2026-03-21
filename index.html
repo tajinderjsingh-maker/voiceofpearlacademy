@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Newsletter Experience</title>
+<title>Voice of Pearl</title>
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial;background:#020617;color:#fff;overflow:hidden}
+body{margin:0;font-family:Arial;background:#020617;color:#fff;overflow-x:hidden}
 
 body::before{content:"";position:fixed;inset:0;z-index:0;
 background:
@@ -27,6 +27,12 @@ animation:bgMove 40s linear infinite}
 .card img,.card video{width:100%;height:100%;object-fit:cover}
 
 .hint{position:absolute;bottom:80px;font-size:14px;opacity:.85;display:flex;gap:8px}
+
+/* youtube section */
+.videoSection{padding:40px 20px;display:flex;flex-direction:column;gap:24px}
+.videoBlock{display:flex;flex-direction:column;gap:10px}
+.videoBlock iframe{width:100%;height:200px;border-radius:12px;border:none}
+.videoTitle{font-size:14px;opacity:.85}
 </style>
 </head>
 <body>
@@ -40,6 +46,22 @@ animation:bgMove 40s linear infinite}
 <div class="carousel" id="carousel"></div>
 <div class="hint">← Swipe →</div>
 </div>
+
+<div class="videoSection">
+  <div class="videoBlock">
+    <iframe src="https://www.youtube.com/embed/KHx3EGSJoAs" allowfullscreen></iframe>
+    <div class="videoTitle">School of Complete Professionals | Pearl Academy</div>
+  </div>
+
+  <div class="videoBlock">
+    <iframe src="https://www.youtube.com/embed/998spY0pE6c" allowfullscreen></iframe>
+    <div class="videoTitle">Success Stories | Pearl Academy Alumni Who Made It Big</div>
+  </div>
+</div>
+
+<!-- background audio -->
+<audio id="bgAudio" src="media/audio.mp3" loop></audio>
+<div id="audioToggle" style="position:fixed;top:16px;right:16px;z-index:10;cursor:pointer;font-size:18px;opacity:.8">🔊</div>
 
 <script>
 const TOTAL=89
@@ -55,7 +77,6 @@ const data = Array.from({length:TOTAL},(_,i)=>{
 const carousel=document.getElementById('carousel')
 let index=0,target=0,dragging=false
 
-// create fixed pool (NO re-creation = no flicker)
 const VISIBLE=7
 const cards=[]
 
@@ -105,7 +126,6 @@ function render(){
 
   setContent(card,item,abs<0.5)
 
-  // pause non-center videos
   if(card.media && card.media.tagName==='VIDEO'){
     if(abs<0.5){card.media.play().catch(()=>{})}
     else{card.media.pause()}
@@ -128,12 +148,32 @@ function animate(){
 }
 animate()
 
-// autoplay simple (stable)
-setInterval(()=>{
- if(!dragging) target=(target+1)%TOTAL
-},2000)
+// improved autoplay with video duration + pause
+let autoTimer
+function scheduleNext(){
+ clearTimeout(autoTimer)
+ const current=Math.round(target)
+ const item=data[current]
 
-// pointer smooth
+ if(item.type==='video'){
+  const v=document.createElement('video')
+  v.src=item.src
+  v.onloadedmetadata=()=>{
+    const duration=v.duration*1000
+    autoTimer=setTimeout(()=>{
+      if(!dragging) target=(target+1)%TOTAL
+      scheduleNext()
+    }, duration + 3000) // 3s pause after video
+  }
+ }else{
+  autoTimer=setTimeout(()=>{
+    if(!dragging) target=(target+1)%TOTAL
+    scheduleNext()
+  },2000)
+ }
+}
+scheduleNext()
+
 let lastX=0
 carousel.addEventListener('pointerdown',e=>{
  dragging=true
@@ -151,7 +191,30 @@ window.addEventListener('pointermove',e=>{
 window.addEventListener('pointerup',e=>{
  dragging=false
  try{carousel.releasePointerCapture(e.pointerId)}catch{}
+ scheduleNext()
 })
+
+// audio autoplay handling (browser-safe)
+const audio=document.getElementById('bgAudio')
+const audioBtn=document.getElementById('audioToggle')
+
+function tryPlayAudio(){
+ audio.play().catch(()=>{})
+}
+
+// attempt autoplay
+window.addEventListener('load',tryPlayAudio)
+
+// fallback (first interaction)
+document.addEventListener('click',()=>{
+ audio.play().catch(()=>{})
+},{once:true})
+
+// toggle control
+audioBtn.onclick=()=>{
+ if(audio.paused){audio.play();audioBtn.innerText='🔊'}
+ else{audio.pause();audioBtn.innerText='🔇'}
+}
 
 console.assert(data.length===89)
 </script>
